@@ -163,6 +163,8 @@ void Maze::generateDFS() {
     getCell(startX, startY).visited = true;
     st.push({ startX , startY });
 
+    int step = 0;
+
     while (!st.empty()) {
         int x = st.top().first;
         int y = st.top().second;
@@ -184,7 +186,15 @@ void Maze::generateDFS() {
             case Direction::West:  neighbor_x = x - 1; break;
             }
 
+            // 添加调试输出
+            qDebug() << "Step" << step << ": Checking from (" << x << "," << y
+                     << ") direction" << static_cast<int>(dir)
+                     << "to (" << neighbor_x << "," << neighbor_y << ")";
+
             if (neighbor_x >= 0 && neighbor_x < width && neighbor_y >= 0 && neighbor_y < height && !getCell(neighbor_x, neighbor_y).visited) {
+                qDebug() << "  Removing wall between (" << x << "," << y
+                         << ") and (" << neighbor_x << "," << neighbor_y << ")";
+
                 getCell(x, y).removeWall(dir);
                 getCell(neighbor_x, neighbor_y).removeWall(MazeUtils::getOppositeDirection(dir));
 
@@ -192,14 +202,31 @@ void Maze::generateDFS() {
                 st.push({ neighbor_x , neighbor_y });
 
                 foundVisited = true;
+                step++;
                 break;
             }
         }
+
         //如果四个方向的单元格都被访问过，开始回溯，弹出栈顶元素，回到上一个单元格再次开始循环；
         if (!foundVisited) {
+            qDebug() << "Backtracking from (" << x << "," << y << ")";
             st.pop();
         }
     }
+
+    // 打印最终的墙状态
+    qDebug() << "Final wall states:";
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            const Cell& cell = getCell(x, y);
+            qDebug() << "Cell (" << x << "," << y << "):"
+                     << "North:" << cell.hasWall(Direction::North)
+                     << "East:" << cell.hasWall(Direction::East)
+                     << "South:" << cell.hasWall(Direction::South)
+                     << "West:" << cell.hasWall(Direction::West);
+        }
+    }
+
     setStart(0, 0);
     setEnd(width - 1, height - 1);
 }
@@ -219,7 +246,22 @@ bool Maze::solveAStar() {
 }
 
 void Maze::reset() {
-    // TODO: 后续实现
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            grid[y][x].visited = false;
+            grid[y][x].inPath = false;
+
+            // 使用新的setWall方法重置所有墙
+            grid[y][x].setWall(Direction::North, true);
+            grid[y][x].setWall(Direction::East, true);
+            grid[y][x].setWall(Direction::South, true);
+            grid[y][x].setWall(Direction::West, true);
+        }
+    }
+
+    playerX = startX;
+    playerY = startY;
+    gameWon = false;
 }
 
 void Maze::clearSolution() {

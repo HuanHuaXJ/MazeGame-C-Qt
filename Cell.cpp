@@ -19,3 +19,7 @@ bool Cell::hasWall(Direction dir) const {
 void Cell::removeWall(Direction dir) {
     walls[static_cast<int> (dir)] = false;
 }
+
+void Cell::setWall(Direction dir, bool state) {
+    walls[static_cast<int>(dir)] = state;
+}

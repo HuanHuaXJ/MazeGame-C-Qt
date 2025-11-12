@@ -20,6 +20,8 @@ public:
 
     void removeWall(Direction dir);
 
+    void setWall(Direction dir, bool state);  // 新增方法
+
 
 
 };
