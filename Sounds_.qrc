@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/sounds">
+        <file alias="move.wav">sounds/move.wav</file>
+        <file alias="win.wav">sounds/win.wav</file>
+        <file alias="wall_hit.wav">sounds/wall_hit.wav</file>
+        <file alias="background_music.wav">sounds/background_music.wav</file>
+    </qresource>
+</RCC>

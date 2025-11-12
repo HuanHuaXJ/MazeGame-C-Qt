@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/sounds">
+         <file alias="move.wav">C:/Users/Lenovo/Desktop/MazeGame/sounds/move.wav</file>
+         <file alias="win.wav">C:/Users/Lenovo/Desktop/MazeGame/sounds/win.wav</file>
+         <file alias="wall_hit.wav">C:/Users/Lenovo/Desktop/MazeGame/sounds/wall_hit.wav</file>
+    </qresource>
+</RCC>
