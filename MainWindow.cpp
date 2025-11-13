@@ -569,7 +569,22 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             delete currentMaze;
         }
         currentMaze = new Maze(mazeSize , mazeSize);
-        currentMaze -> generateDFS();
+        // 无限模式，根据难度选择不同的生成算法
+        switch(difficulty) {
+        case Difficulty::Easy:
+            currentMaze->generateDFS();
+            break;
+        case Difficulty::Medium:
+            currentMaze->generateDFS();
+            break;
+        case Difficulty::Hard:
+            currentMaze->generatePrim();
+            break;
+            break;
+        default:
+            currentMaze->generateDFS();
+        }
+
         //调整单元格大小以适应不同难度；
         if(mazeSize <= 8){
             cellSize = 40;

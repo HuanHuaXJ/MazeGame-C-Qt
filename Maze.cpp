@@ -186,7 +186,6 @@ void Maze::generateDFS() {
             case Direction::West:  neighbor_x = x - 1; break;
             }
 
-            // 添加调试输出
             qDebug() << "Step" << step << ": Checking from (" << x << "," << y
                      << ") direction" << static_cast<int>(dir)
                      << "to (" << neighbor_x << "," << neighbor_y << ")";
@@ -232,12 +231,160 @@ void Maze::generateDFS() {
 }
 
 void Maze::generatePrim() {
-    // TODO: 后续实现
+    qDebug() << "Prim";
+    reset();
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // 存储墙的信息：当前单元格坐标和方向
+    std::vector<std::tuple<int, int, Direction>> walls;
+
+    // 从随机位置开始（使用奇数坐标）
+    int startX = 1;
+    int startY = 1;
+    getCell(startX, startY).visited = true;
+
+    // 将起点的所有墙加入列表
+    if (startY > 1) walls.emplace_back(startX, startY, Direction::North);
+    if (startX < width - 2) walls.emplace_back(startX, startY, Direction::East);
+    if (startY < height - 2) walls.emplace_back(startX, startY, Direction::South);
+    if (startX > 1) walls.emplace_back(startX, startY, Direction::West);
+
+    while (!walls.empty()) {
+        // 随机选择一堵墙
+        std::uniform_int_distribution<> dis(0, walls.size() - 1);
+        int index = dis(gen);
+        auto [x, y, dir] = walls[index];
+        walls.erase(walls.begin() + index);
+
+        // 计算邻居单元格（步长为2）
+        int nx = x, ny = y;
+        switch (dir) {
+        case Direction::North: ny = y - 2; break;
+        case Direction::South: ny = y + 2; break;
+        case Direction::East:  nx = x + 2; break;
+        case Direction::West:  nx = x - 2; break;
+        }
+
+        // 确保邻居在边界内
+        if (nx < 1 || nx >= width - 1 || ny < 1 || ny >= height - 1) {
+            continue;
+        }
+
+        Cell& current = getCell(x, y);
+        Cell& neighbor = getCell(nx, ny);
+
+        // 关键：如果邻居未被访问，就打通这面墙
+        if (!neighbor.visited) {
+            // 打通当前单元格和目标单元格之间的墙
+            current.removeWall(dir);
+            neighbor.removeWall(MazeUtils::getOppositeDirection(dir));
+
+            // 打通中间单元格的墙
+            int midX = (x + nx) / 2;
+            int midY = (y + ny) / 2;
+            getCell(midX, midY).visited = true;
+            getCell(midX, midY).removeWall(dir);
+            getCell(midX, midY).removeWall(MazeUtils::getOppositeDirection(dir));
+
+            // 标记邻居为已访问
+            neighbor.visited = true;
+
+            // 添加邻居的所有墙到列表
+            if (ny > 1) walls.emplace_back(nx, ny, Direction::North);
+            if (nx < width - 2) walls.emplace_back(nx, ny, Direction::East);
+            if (ny < height - 2) walls.emplace_back(nx, ny, Direction::South);
+            if (nx > 1) walls.emplace_back(nx, ny, Direction::West);
+        }
+    }
+
+    // 设置入口和出口
+    setStart(0, 1);
+    setEnd(width - 1, height - 2);
+
+    // 确保入口和出口的墙被打开
+    getCell(0, 1).removeWall(Direction::East);
+    getCell(1, 1).removeWall(Direction::West);
+
+    getCell(width - 1, height - 2).removeWall(Direction::West);
+    getCell(width - 2, height - 2).removeWall(Direction::East);
+
+    // 设置玩家起始位置
+    playerX = 0;
+    playerY = 1;
 }
 
 bool Maze::solveBFS() {
-    // TODO: 后续实现
-    return false;
+        // 清除之前的路径标记
+        clearSolution();
+
+        // 创建队列和访问标记
+        std::queue<std::pair<int, int>> q;
+        std::vector<std::vector<bool>> visited(height, std::vector<bool>(width, false));
+        std::vector<std::vector<std::pair<int, int>>> parent(height, std::vector<std::pair<int, int>>(width, {-1, -1}));
+
+        // 从起点开始
+        q.push({startX, startY});
+        visited[startY][startX] = true;
+
+        // 定义四个方向
+        std::array<Direction, 4> directions = {
+            Direction::North, Direction::East, Direction::South, Direction::West
+        };
+
+        bool found = false;
+
+        while (!q.empty() && !found) {
+            auto [x, y] = q.front();
+            q.pop();
+
+            // 如果到达终点
+            if (x == endX && y == endY) {
+                found = true;
+                break;
+            }
+
+            // 检查四个方向
+            for (Direction dir : directions) {
+                int nx = x, ny = y;
+                switch (dir) {
+                case Direction::North: ny = y - 1; break;
+                case Direction::East:  nx = x + 1; break;
+                case Direction::South: ny = y + 1; break;
+                case Direction::West:  nx = x - 1; break;
+                }
+
+                // 检查边界和墙
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height &&
+                    !visited[ny][nx] && !getCell(x, y).hasWall(dir)) {
+
+                    visited[ny][nx] = true;
+                    parent[ny][nx] = {x, y};
+                    q.push({nx, ny});
+                }
+            }
+        }
+
+        // 如果找到路径，回溯并标记
+        if (found) {
+            // 从终点回溯到起点
+            int x = endX, y = endY;
+            while (x != startX || y != startY) {
+                getCell(x, y).inPath = true;
+                auto [px, py] = parent[y][x];
+                x = px;
+                y = py;
+            }
+            // 标记起点
+            getCell(startX, startY).inPath = true;
+
+        } else {
+            qDebug() << "BFS could not find a solution!";
+        }
+
+    return found;
+
 }
 
 bool Maze::solveAStar() {

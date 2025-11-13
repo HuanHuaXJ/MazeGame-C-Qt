@@ -5,6 +5,11 @@
 #include <iostream>
 #include <vector>
 #include "Cell.h"
+#include <random>
+#include <queue>
+#include <unordered_set>
+#include <algorithm>
+#include <cmath>
 
 class Maze {
 private:
@@ -74,6 +79,17 @@ public:
 
     int getEndY()const;
 
+};
+
+class MazeGenerator {
+private:
+    std::random_device rd;
+    std::mt19937 gen;
+
+public:
+    MazeGenerator() : gen(rd()) {
+        // 构造函数初始化
+    }
 };
 
 #endif // MAZE_H
